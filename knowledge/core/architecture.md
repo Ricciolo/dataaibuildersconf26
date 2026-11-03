@@ -1,0 +1,2 @@
+# Integrazione degli eventi ordine
+Un produttore emette eventi JSON. Un consumatore memorizza ogni consegna in `raw_events`, materializza gli ordini in `orders` e registra le informazioni diagnostiche dell'acquisizione. PostgreSQL è l'archivio analitico. L'identità dell'evento e quella della consegna sono distinte. Il modello di destinazione supporta entrambe le versioni del contratto. Tutti i dati sono sintetici.

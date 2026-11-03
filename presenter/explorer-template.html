@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="it"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Data Incident Explorer</title>
+<style>body{font:17px system-ui;max-width:1100px;margin:40px auto;padding:20px;background:#101827;color:#dce8f5}h1{font-size:36px}.cards{display:flex;flex-wrap:wrap;gap:12px}.card,details{background:#1e293b;padding:18px;border-radius:8px;margin:12px 0}.value{font-size:28px;font-weight:bold}pre{white-space:pre-wrap;overflow-wrap:anywhere}select{padding:10px}table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:10px;border-bottom:1px solid #475569}</style>
+<h1>Data Incident Explorer</h1><p id="origin"></p><div id="cards" class="cards"></div>
+<h2>Schema diff</h2><table><tr><th>v1</th><th>v2</th></tr><tr><td>customerId: string</td><td>customer.id: string</td></tr></table>
+<h2>Campioni verificati</h2><label>Filtro <select id="filter"><option value="all">Tutti</option><option value="missing">Cliente mancante</option><option value="offset">Offset non zero nel payload</option></select></label><div id="samples"></div>
+<details><summary>SQL di verifica e definizioni</summary><p>I KPI contano righe/consegne, tranne eventi distinti. Duplicati = righe in eccesso; le anomalie si sovrappongono. I campioni sono limitati a tre deliveryId.</p><pre id="sql"></pre></details>
+<script type="application/json" id="data">__REPORT__</script>
+<script>
+const d=JSON.parse(document.getElementById('data').textContent);
+document.getElementById('origin').textContent=d.origin+' · scenario '+d.scenario;
+for(const [k,v] of Object.entries(d.metrics)){const c=document.createElement('div');c.className='card';const label=document.createElement('div');label.textContent=k;const n=document.createElement('div');n.className='value';n.textContent=v;c.append(label,n);document.getElementById('cards').append(c)}
+document.getElementById('sql').textContent=d.sql;
+function render(){const f=document.getElementById('filter').value;const root=document.getElementById('samples');root.replaceChildren();for(const s of d.samples){if(f==='missing'&&s.customer_id!==null)continue;if(f==='offset'&&!s.payload.occurredAt.endsWith('+02:00'))continue;const box=document.createElement('details');const title=document.createElement('summary');title.textContent='Delivery '+s.delivery_id+' · '+s.event_id;const pre=document.createElement('pre');pre.textContent=JSON.stringify(s,null,2);box.append(title,pre);root.append(box)}}
+document.getElementById('filter').addEventListener('change',render);render();
+</script></html>

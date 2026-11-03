@@ -1,0 +1,53 @@
+{
+  "$schema": "https://github.com/Azure/data-api-builder/releases/download/v2.0.12/dab.draft.schema.json",
+  "data-source": {
+    "database-type": "postgresql",
+    "connection-string": "@env('DAB_CONNECTION_STRING')"
+  },
+  "runtime": {
+    "rest": {
+      "enabled": false
+    },
+    "graphql": {
+      "enabled": false
+    },
+    "host": {
+      "mode": "development"
+    },
+    "mcp": {
+      "enabled": true,
+      "dml-tools": {
+        "describe-entities": true,
+        "read-records": true,
+        "create-record": false,
+        "update-record": false,
+        "delete-record": false,
+        "execute-entity": false,
+        "aggregate-records": false
+      }
+    }
+  },
+  "entities": {
+    "OrderQuality": {
+      "source": {
+        "object": "public.v_order_quality",
+        "type": "view",
+        "key-fields": [
+          "delivery_id"
+        ]
+      },
+      "permissions": [
+        {
+          "role": "anonymous",
+          "actions": [
+            "read"
+          ]
+        }
+      ],
+      "mcp": {
+        "dml-tools": true,
+        "custom-tool": false
+      }
+    }
+  }
+}

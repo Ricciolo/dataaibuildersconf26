@@ -1,0 +1,20 @@
+{
+  "baseline": {
+    "raw_events": 3000,
+    "orders": 3000,
+    "distinct_events": 3000,
+    "missing_customer": 0,
+    "duplicate_excess": 0,
+    "timestamp_shifted": 0,
+    "ingestion_errors": 0
+  },
+  "incident": {
+    "raw_events": 3060,
+    "orders": 3060,
+    "distinct_events": 3000,
+    "missing_customer": 1530,
+    "duplicate_excess": 60,
+    "timestamp_shifted": 1020,
+    "ingestion_errors": 1530
+  }
+}

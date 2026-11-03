@@ -1,0 +1,23 @@
+{
+  "core": [
+    "knowledge/core/architecture.md",
+    "knowledge/core/business-rules.md",
+    "knowledge/core/contract-v1.md",
+    "knowledge/core/contract-v2.md",
+    "knowledge/core/data-dictionary.md"
+  ],
+  "extended": [
+    "knowledge/extended/api-delivery-spec.md",
+    "knowledge/extended/changelog.md",
+    "knowledge/extended/contract-versioning.md",
+    "knowledge/extended/failure-triage.md",
+    "knowledge/extended/mapping-reference.md",
+    "knowledge/extended/operations-access.md",
+    "knowledge/extended/postgres-query-guide.md",
+    "knowledge/extended/quality-view-spec.md",
+    "knowledge/extended/release-checklist.md",
+    "knowledge/extended/runbook-diagnostics.md",
+    "knowledge/extended/runbook-replay.md",
+    "knowledge/extended/validation-catalog.md"
+  ]
+}

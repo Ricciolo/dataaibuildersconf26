@@ -1,0 +1,2 @@
+# Regole di business
+Deve esistere un solo ordine analitico per ogni `eventId` distinto. L'identità del cliente è obbligatoria per le analisi sui clienti. Preservare l'istante di `occurredAt` e normalizzarlo in UTC; per le date dei report aziendali usare esplicitamente `Europe/Rome`. Gli importi sono numeri interi di centesimi. I tentativi di riconsegna non devono aumentare il fatturato o il numero di ordini. Non dedurre gli identificativi cliente mancanti.
