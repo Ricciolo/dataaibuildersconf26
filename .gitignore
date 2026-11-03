@@ -1,0 +1,9 @@
+.venv/
+.env
+.local/
+__pycache__/
+public/evidence/*
+!public/evidence/.gitkeep
+presenter/generated/
+
+.DS_Store
