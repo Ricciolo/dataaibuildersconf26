@@ -62,3 +62,9 @@ Demo 1: [Projects, Knowledge e RAG](demos/projects-rag.md), elenco file in `demo
 
 ## Documentazione italiana e collegamento GitHub
 Tutti i Markdown del repository sono in italiano; restano invariati nomi dei prodotti, percorsi, comandi e identificatori. È disponibile l'alternativa GitHub descritta nella guida Claude Desktop: selezionare soltanto le due cartelle `knowledge/`. Per il Project usare il collegamento GitHub selezionando esclusivamente `knowledge/core/` e `knowledge/extended/`; dopo gli aggiornamenti pubblicati eseguire la sincronizzazione in Claude. Il caricamento manuale resta disponibile come alternativa.
+
+## Nuovi record reali durante la demo Artifact
+
+Dopo aver creato la prima fotografia dell’incidente, eseguire `python scripts/seed.py --append-demo`: aggiunge tre consegne reali (due eventi distinti e una riconsegna), senza reset, usando il consumer incident. `python scripts/seed.py --verify` riconosce anche lo stato `incident-live`. Una seconda aggiunta viene rifiutata per evitare duplicazioni accidentali. Per ripetere la demo ripartire dal reset incident.
+
+Per aggiornare i dati chiedere nella stessa chat a Claude di rileggere PostgreSQL tramite DBHub e aggiornare l’Artifact. Ricaricare soltanto l’HTML non rilegge PostgreSQL: l’Artifact resta una fotografia, senza una connessione diretta al database.

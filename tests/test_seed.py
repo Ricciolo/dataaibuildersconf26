@@ -18,4 +18,16 @@ class SeedTests(unittest.TestCase):
   self.assertEqual(rows[0][5]-seed.datetime.fromisoformat(events[0]['occurredAt']),seed.timedelta(hours=2))
   self.assertEqual(events[3000],events[0])
   self.assertNotEqual(rows[3000][0],rows[0][0])
+class LiveDemoTests(unittest.TestCase):
+ def test_three_deliveries_two_events(self):
+  events=seed.live_events()
+  self.assertEqual(events[1], events[2])
+  expected={'baseline': (2, 0, 3000), 'incident': (3, 2, 5000)}
+  for scenario, (count, missing, cents) in expected.items():
+   rows, errors=seed.consume(events, scenario)
+   self.assertEqual(len(rows), count)
+   self.assertEqual(len(errors), missing)
+   self.assertEqual(sum(r[4] for r in rows), cents)
+   self.assertEqual(sum(r[5] != seed.datetime.fromisoformat(events[r[0]-1]['occurredAt']) for r in rows), missing)
+
 if __name__=='__main__': unittest.main()

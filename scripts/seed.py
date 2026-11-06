@@ -69,14 +69,74 @@ def db_metrics(conn):
         c.execute('SELECT (SELECT count(*) FROM raw_events), count(*),count(DISTINCT event_id),count(*) FILTER(WHERE missing_customer),count(*)-count(DISTINCT event_id),count(*) FILTER(WHERE timestamp_delta_seconds<>0),(SELECT count(*) FROM ingestion_errors) FROM v_order_quality')
         return dict(zip(['raw_events','orders','distinct_events','missing_customer','duplicate_excess','timestamp_shifted','ingestion_errors'],c.fetchone()))
 
+def live_events():
+    """Due nuovi eventi e una riconsegna identica, con importi noti."""
+    first = dict(eventId='live-A', orderId='live-order-A', schemaVersion=1,
+                 customerId='live-customer-A', amountCents=1000,
+                 occurredAt='2026-06-04T12:00:00+00:00')
+    second = dict(eventId='live-B', orderId='live-order-B', schemaVersion=2,
+                  customer={'id': 'live-customer-B'}, amountCents=2000,
+                  occurredAt='2026-06-04T12:00:00+02:00')
+    return [first, second, dict(second)]
+
+
+def live_expected(expected):
+    delta = dict(raw_events=3, orders=3, distinct_events=2, missing_customer=2,
+                 duplicate_excess=1, timestamp_shifted=2, ingestion_errors=2)
+    return {key: value + delta[key] for key, value in expected['incident'].items()}
+
+
+def append_demo(expected):
+    """Aggiunge tre consegne atomiche; nessun reset e nessuna replica accidentale."""
+    events = live_events()
+    rows, errors = consume(events, 'incident')
+    with connect() as conn:
+        with conn.cursor() as c:
+            c.execute('LOCK TABLE raw_events, orders, ingestion_errors IN EXCLUSIVE MODE')
+            if db_metrics(conn) != expected['incident']:
+                raise SystemExit('Append annullato: serve lo scenario incident iniziale; nessun dato modificato.')
+            c.execute("SELECT count(*) FROM raw_events WHERE payload->>'eventId' IN ('live-A','live-B')")
+            if c.fetchone()[0]:
+                raise SystemExit('Append annullato: eventi live già presenti.')
+            c.execute('SELECT coalesce(max(delivery_id), 0) FROM raw_events')
+            start = c.fetchone()[0]
+            c.executemany('INSERT INTO raw_events VALUES (%s,%s::jsonb)',
+                          [(start+i, json.dumps(e)) for i,e in enumerate(events, 1)])
+            c.executemany('INSERT INTO orders VALUES (%s,%s,%s,%s,%s,%s)',
+                          [(start+r[0], *r[1:]) for r in rows])
+            c.executemany('INSERT INTO ingestion_errors VALUES (%s,%s,%s)',
+                          [(start+r[0], *r[1:]) for r in errors])
+            measured = db_metrics(conn)
+            if measured != live_expected(expected):
+                raise RuntimeError('Metriche inattese: transazione annullata')
+            c.execute('SELECT delivery_id,payload FROM raw_events ORDER BY delivery_id')
+            deliveries = c.fetchall()
+            c.execute('SELECT delivery_id,event_id,order_id,customer_id,amount_cents,occurred_at FROM orders ORDER BY delivery_id')
+            all_rows = c.fetchall()
+            c.execute('SELECT delivery_id,code,detail FROM ingestion_errors ORDER BY delivery_id')
+            all_errors = c.fetchall()
+            if [i for i,_ in deliveries] != list(range(1, len(deliveries)+1)):
+                raise RuntimeError('Identificativi non contigui: transazione annullata')
+    export([e for _,e in deliveries], all_rows, all_errors, 'incident-live', measured,
+           'PostgreSQL append committed and metrics verified')
+    print(json.dumps(dict(scenario='incident-live', added_delivery_ids=[start+i for i in range(1,4)],
+                         metrics=measured), indent=2))
+
+
 def main():
     p=argparse.ArgumentParser(); p.add_argument('--reset',action='store_true'); p.add_argument('--scenario',choices=['baseline','incident'],default='incident'); p.add_argument('--verify',action='store_true'); p.add_argument('--offline',action='store_true',help='Generate Python-only evidence; never claim DB verification')
+    p.add_argument('--append-demo', action='store_true', help='Aggiunge tre consegne reali allo scenario incident, senza reset')
     a=p.parse_args()
+    if a.append_demo and (a.reset or a.offline or a.verify or a.scenario != 'incident'):
+        p.error('--append-demo va usato da solo')
     expected=json.loads((ROOT/'validation/expected-results.json').read_text())
+    if a.append_demo:
+        append_demo(expected); return
     if a.verify:
         with connect() as conn:
             actual=db_metrics(conn)
-        matches=[name for name,value in expected.items() if value==actual]
+        known = dict(expected, **{'incident-live': live_expected(expected)})
+        matches=[name for name,value in known.items() if value==actual]
         if not matches: raise SystemExit('FAIL: '+json.dumps(actual))
         print('PASS database scenario='+matches[0]+' '+json.dumps(actual)); return
     if not a.reset and not a.offline: p.error('Use --reset to replace demo tables, or --verify')
